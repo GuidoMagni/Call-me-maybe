@@ -124,3 +124,38 @@ class Small_LLM_Model:
             filename=tokenizer_file_name
         )
         return tokenizer_path
+
+
+    def generate(
+        self,
+        prompt: str,
+        *,
+        max_new_tokens: int = 50,
+        temperature: float = 0.7,
+        do_sample: bool = True,
+    ) -> str:
+        """Generate text continuation from a prompt."""
+
+        inputs = self._tokenizer(
+            prompt,
+            return_tensors="pt",
+        )
+
+        inputs = {
+            key: value.to(self._device)
+            for key, value in inputs.items()
+        }
+
+        with torch.no_grad():
+            output_ids = self._model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                do_sample=do_sample,
+                pad_token_id=self._tokenizer.pad_token_id,
+            )
+
+        return self._tokenizer.decode(
+            output_ids[0],
+            skip_special_tokens=True,
+        )
