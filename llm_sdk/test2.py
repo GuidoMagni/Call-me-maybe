@@ -1,11 +1,13 @@
 from llm_sdk import Small_LLM_Model
 
 tests = [
-    "The capital of France is",
+    "what is the capital of italy",
     "2 + 2 =",
     "Python is a programming language used for",
     "Once upon a time",
     "Explain gravity in one sentence:",
+    "Who made Qwen3-0.6B",
+    "do you know that you are Qwen",
 ]
 
 model = Small_LLM_Model()
