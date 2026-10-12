@@ -1,13 +1,11 @@
 # ABOUTME: LLM SDK for local model inference using Hugging Face transformers.
 # ABOUTME: Provides Small_LLM_Model class for loading and running causal language models.
 
-import time
-from typing import Tuple
+from typing import Any
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel, logging
 from huggingface_hub import hf_hub_download
-import os
 
 
 logging.set_verbosity_error()  # keep the console clean
@@ -97,6 +95,26 @@ class Small_LLM_Model:
         # Get logits for the last token in the sequence for the batch (batch size 1)
         logits = out.logits[0, -1].tolist()
         return [float(x) for x in logits]
+
+    def get_logits_from_input_ids_with_cache(
+        self,
+        input_ids: list[int],
+        past_key_values: Any = None,
+    ) -> tuple[list[float], Any]:
+        """Return next-token logits and a reusable cache for autoregressive decoding."""
+        if not input_ids:
+            raise ValueError("input_ids must contain at least one token")
+
+        model_input_ids = input_ids if past_key_values is None else input_ids[-1:]
+        input_tensor = torch.tensor([model_input_ids], device=self._device, dtype=torch.long)
+        with torch.no_grad():
+            out = self._model(
+                input_ids=input_tensor,
+                past_key_values=past_key_values,
+                use_cache=True,
+            )
+        logits = out.logits[0, -1].tolist()
+        return [float(value) for value in logits], out.past_key_values
 
 
     def get_path_to_vocab_file(self) -> str:
