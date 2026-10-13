@@ -40,11 +40,12 @@ def load_json_file(filepath: str) -> List[Dict[str, Any]]:
 
 
 def generate_function_call(
-    model: Any, 
-    decoder: JSONConstrainedDecoder, 
+    model: Any,
+    decoder: JSONConstrainedDecoder,
     prompt: str
 ) -> Dict[str, Any]:
-    """Generate a function call matching one of the registered function schemas."""
+    """Generate a function call matching one of the
+    registered function schemas."""
     function_schemas = [
         {
             "name": function.name,
@@ -72,33 +73,34 @@ def generate_function_call(
         f"User request: {prompt}\n"
         "Function call JSON:"
     )
-    
+
     input_ids: List[int] = model.encode(system_prompt)[0].tolist()
     generated_text = ""
     past_key_values: Any = None
     cached_logits = getattr(model, "get_logits_from_input_ids_with_cache", None)
-    
-    max_tokens = 200 # Safety limit to prevent infinite loops
-    
+
+    max_tokens = 200  # Safety limit to prevent infinite loops
+
     for _ in range(max_tokens):
         if callable(cached_logits):
             logits, past_key_values = cached_logits(input_ids, past_key_values)
         else:
             logits = model.get_logits_from_input_ids(input_ids)
-        
+
         # --- Core Constrained Decoding Step ---
         masked_logits = decoder.apply_mask(logits, generated_text)
         if not np.isfinite(masked_logits).any():
             raise RuntimeError(f"No valid next token while generating a call for prompt: {prompt}")
-        
+
         # Select highest probability valid token
         next_token_id = int(np.argmax(masked_logits))
         input_ids.append(next_token_id)
-        
-        # Decode token and append (safely utilizing vocab if decode isn't provided)
+
+        # Decode token and append (safely utilizing
+        # vocab if decode isn't provided)
         next_token_str = decoder.vocab.id_to_token.get(next_token_id, "")
         generated_text += next_token_str
-        
+
         try:
             call_data, end = json.JSONDecoder().raw_decode(generated_text)
         except json.JSONDecodeError:
@@ -121,41 +123,42 @@ def generate_function_call(
 def main() -> None:
     """Main application loop."""
     args = parse_arguments()
-    
+
     # 1. Load Data
     funcs_raw = load_json_file(args.functions_definition)
     prompts_raw = load_json_file(args.input)
-    
+
     # 2. Validate Data with Pydantic
     functions = [FunctionDefinition(**f) for f in funcs_raw]
     prompts = [PromptInput(**p) for p in prompts_raw]
-    
+
     # 3. Initialize Model and SDK
     model = Small_LLM_Model()
     vocab = Vocabulary(model.get_path_to_vocab_file())
     decoder = JSONConstrainedDecoder(vocab, functions)
-    
+
     results: List[Dict[str, Any]] = []
-    
+
     # 4. Process each prompt
     for p in prompts:
         print(f"Processing prompt: {p.prompt}")
         call_data = generate_function_call(model, decoder, p.prompt)
-        
+
         output = FunctionCallOutput(
             prompt=p.prompt,
             name=call_data.get("name", "unknown"),
             parameters=call_data.get("parameters", {})
         )
         results.append(output.model_dump())
-        
+
     # 5. Output results
     import os
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=4)
-        
+
     print(f"Success! Output written to {args.output}")
+
 
 if __name__ == "__main__":
     main()
