@@ -5,7 +5,8 @@
 from typing import Any
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel, logging
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import PreTrainedTokenizer, PreTrainedModel, logging
 from huggingface_hub import hf_hub_download
 
 
@@ -51,7 +52,8 @@ class Small_LLM_Model:
         self._device = device
 
         if dtype is None:
-            dtype = torch.float16 if self._device in ["cuda", "mps"] else torch.float32
+            dtype = torch.float16 if self._device in [
+                "cuda", "mps"] else torch.float32
         self._dtype = dtype
 
         # --- load tokenizer & model ----------------------------------------
@@ -85,14 +87,15 @@ class Small_LLM_Model:
         """Inverse of :py:meth:`encode`. Removes special tokens."""
         if isinstance(ids, torch.Tensor):
             ids = ids.tolist()
-        return self._tokenizer.decode(ids, skip_special_tokens=True)
+        return str(self._tokenizer.decode(ids, skip_special_tokens=True))
 
     def get_logits_from_input_ids(self, input_ids: list[int]) -> list[float]:
         """
         Given a list of input token ids, return the raw logits
         (no softmax) for the next token.
         """
-        input_tensor = torch.tensor([input_ids], device=self._device, dtype=torch.long)
+        input_tensor = torch.tensor(
+            [input_ids], device=self._device, dtype=torch.long)
         with torch.no_grad():
             out = self._model(input_ids=input_tensor)
         # Get logits for the last token in the sequence
@@ -110,8 +113,10 @@ class Small_LLM_Model:
         if not input_ids:
             raise ValueError("input_ids must contain at least one token")
 
-        model_input_ids = input_ids if past_key_values is None else input_ids[-1:]
-        input_tensor = torch.tensor([model_input_ids], device=self._device, dtype=torch.long)
+        model_input_ids = input_ids if (
+            past_key_values is None) else input_ids[-1:]
+        input_tensor = torch.tensor(
+            [model_input_ids], device=self._device, dtype=torch.long)
         with torch.no_grad():
             out = self._model(
                 input_ids=input_tensor,
@@ -122,28 +127,31 @@ class Small_LLM_Model:
         return [float(value) for value in logits], out.past_key_values
 
     def get_path_to_vocab_file(self) -> str:
-        vocab_file_name = self._tokenizer.vocab_files_names.get('vocab_file', "vocab.json")
+        vocab_file_name = self._tokenizer.vocab_files_names.get(
+            'vocab_file', "vocab.json")
         vocab_path = hf_hub_download(
             repo_id=self._model_name,
             filename=vocab_file_name
         )
-        return vocab_path
+        return str(vocab_path)
 
     def get_path_to_merges_file(self) -> str:
-        merges_file_name = self._tokenizer.vocab_files_names.get('merges_file', "merges.txt")
+        merges_file_name = self._tokenizer.vocab_files_names.get(
+            'merges_file', "merges.txt")
         merges_path = hf_hub_download(
             repo_id=self._model_name,
             filename=merges_file_name
         )
-        return merges_path
+        return str(merges_path)
 
     def get_path_to_tokenizer_file(self) -> str:
-        tokenizer_file_name = self._tokenizer.vocab_files_names.get('tokenizer_file', "tokenizer.json")
+        tokenizer_file_name = self._tokenizer.vocab_files_names.get(
+            'tokenizer_file', "tokenizer.json")
         tokenizer_path = hf_hub_download(
             repo_id=self._model_name,
             filename=tokenizer_file_name
         )
-        return tokenizer_path
+        return str(tokenizer_path)
 
     def generate(
         self,
@@ -174,7 +182,7 @@ class Small_LLM_Model:
                 pad_token_id=self._tokenizer.pad_token_id,
             )
 
-        return self._tokenizer.decode(
+        return str(self._tokenizer.decode(
             output_ids[0],
             skip_special_tokens=True,
-        )
+        ))

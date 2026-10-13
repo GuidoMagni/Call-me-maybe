@@ -1,6 +1,6 @@
 """Data models for function calling input and output using Pydantic."""
-from typing import Any, Dict, List
-from pydantic import BaseModel, Field
+from typing import Any, Dict
+from pydantic import BaseModel
 
 
 class FunctionParameter(BaseModel):

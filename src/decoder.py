@@ -152,8 +152,10 @@ def _is_valid_json_prefix(text: str) -> bool:
             literal = {"t": "true", "f": "false", "n": "null"}[char]
             remaining = text[position:]
             if len(remaining) < len(literal):
-                return (length, False) if literal.startswith(remaining) else None
-            return (position + len(literal), True) if remaining.startswith(literal) else None
+                return (length, False) if literal.startswith(
+                    remaining) else None
+            return (position + len(literal), True) if remaining.startswith(
+                literal) else None
         if char == "-" or "0" <= char <= "9":
             return parse_number(position)
         return None
@@ -217,7 +219,8 @@ def _has_only_parameters_top_level(candidate: str) -> bool:
     depth = 1
     in_string = False
     escaped = False
-    for position in range(marker_start + len(parameters_marker), len(candidate)):
+    for position in range(marker_start + len(
+            parameters_marker), len(candidate)):
         char = candidate[position]
         if in_string:
             if escaped:
@@ -242,9 +245,11 @@ def _has_only_parameters_top_level(candidate: str) -> bool:
 
 
 class JSONConstrainedDecoder:
-    """Constrain output to a valid JSON call envelope and a registered function name."""
+    """Constrain output to a valid JSON call
+    envelope and a registered function name."""
 
-    def __init__(self, vocab: Vocabulary, functions: List[FunctionDefinition]) -> None:
+    def __init__(self, vocab: Vocabulary, functions:
+                 List[FunctionDefinition]) -> None:
         self.vocab = vocab
         self.functions = functions
         self.function_names = [fn.name for fn in functions]
@@ -252,11 +257,14 @@ class JSONConstrainedDecoder:
         self.tokens_by_first_char: dict[str, list[tuple[int, str]]] = {}
         for token_id, token_str in self.vocab_tokens:
             if token_str:
-                self.tokens_by_first_char.setdefault(token_str[0], []).append((token_id, token_str))
+                self.tokens_by_first_char.setdefault(
+                    token_str[0], []).append((token_id, token_str))
 
     def normalize_call(self, call_data: object) -> dict[str, Any] | None:
-        """Validate a call and normalize JSON-encoded numeric strings to numbers."""
-        if not isinstance(call_data, dict) or set(call_data) != {"name", "parameters"}:
+        """Validate a call and normalize JSON-encoded
+        numeric strings to numbers."""
+        if not isinstance(call_data, dict) or set(
+                call_data) != {"name", "parameters"}:
             return None
 
         function = next(
@@ -272,7 +280,8 @@ class JSONConstrainedDecoder:
         normalized_parameters: dict[str, Any] = {}
         for name, definition in function.parameters.items():
             value = parameters[name]
-            if definition.type in {"number", "integer"} and isinstance(value, str):
+            if definition.type in {"number", "integer"
+                                   } and isinstance(value, str):
                 try:
                     value = json.loads(value)
                 except json.JSONDecodeError:
@@ -285,15 +294,17 @@ class JSONConstrainedDecoder:
         return {"name": function.name, "parameters": normalized_parameters}
 
     def is_valid_call(self, call_data: object) -> bool:
-        """Check whether a call can be normalized to its registered parameter schema."""
+        """Check whether a call can be normalized
+        to its registered parameter schema."""
         return self.normalize_call(call_data) is not None
 
-    def _is_valid_prefix(self, generated_text: str, next_token_str: str) -> bool:
+    def _is_valid_prefix(self, generated_text: str,
+                         next_token_str: str) -> bool:
         """
-        Determines if adding `next_token_str` keeps the JSON structurally sound.
-        
-        This is a simplified state machine. A production system (like outlines) 
-        builds a full Regex Finite State Machine (FSM). For this project, we 
+        Determines if adding `next_token_str`
+        keeps the JSON structurally sound.
+        This is a simplified state machine. A production system (like outlines)
+        builds a full Regex Finite State Machine (FSM). For this project, we
         simulate state by checking the current string's structure.
         """
         candidate = generated_text + next_token_str
@@ -302,9 +313,9 @@ class JSONConstrainedDecoder:
         template_start = '{"name": "'
         if len(candidate) <= len(template_start):
             return template_start.startswith(candidate)
-        
-        # State 2: Match a complete function name before allowing the transition
-        # to parameters.
+
+        # State 2: Match a complete function name before
+        # allowing the transition to parameters.
         name_part = candidate[len(template_start):]
         name_end = name_part.find('"')
         if name_end == -1:
@@ -330,7 +341,8 @@ class JSONConstrainedDecoder:
             return False
         return self.normalize_call(call_data) is not None
 
-    def apply_mask(self, logits: List[float], generated_text: str) -> npt.NDArray[np.float64]:
+    def apply_mask(self, logits: List[float], generated_text: str
+                   ) -> npt.NDArray[np.float64]:
         """
         Mask tokens outside the valid JSON call format or tokenizer vocabulary.
         """
@@ -355,7 +367,8 @@ class JSONConstrainedDecoder:
         for token_id, token_str in candidate_tokens:
             if token_id >= len(np_logits):
                 continue
-            if plain_string_content and '"' not in token_str and "\\" not in token_str:
+            if plain_string_content and '"' not in token_str and (
+                    "\\") not in token_str:
                 if all(ord(char) >= 0x20 for char in token_str):
                     masked_logits[token_id] = np_logits[token_id]
                     continue

@@ -7,9 +7,10 @@ from typing import Any, Dict, List
 
 # Adjust imports according to your local SDK location
 try:
-    from llm_sdk import Small_LLM_Model  # type: ignore
+    from llm_sdk import Small_LLM_Model
 except ImportError:
-    print("Error: llm_sdk not found. Please ensure it is in the project root.", file=sys.stderr)
+    print("Error: llm_sdk not found. Please ensure it is"
+          " in the project root.", file=sys.stderr)
     sys.exit(1)
 
 from src.models import FunctionDefinition, PromptInput, FunctionCallOutput
@@ -19,10 +20,14 @@ from src.decoder import JSONConstrainedDecoder
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="LLM Function Calling Constrained Decoder")
-    parser.add_argument('-functions_definition', type=str, default='data/input/functions_definition.json')
-    parser.add_argument('-input', type=str, default='data/input/function_calling_tests.json')
-    parser.add_argument('-output', type=str, default='data/output/function_calling_results.json')
+    parser = argparse.ArgumentParser(description="LLM Function Calling"
+                                                 " Constrained Decoder")
+    parser.add_argument('-functions_definition', type=str,
+                        default='data/input/functions_definition.json')
+    parser.add_argument('-input', type=str,
+                        default='data/input/function_calling_tests.json')
+    parser.add_argument('-output', type=str,
+                        default='data/output/function_calling_results.json')
     return parser.parse_args()
 
 
@@ -58,18 +63,30 @@ def generate_function_call(
         for function in decoder.functions
     ]
     system_prompt = (
-        "Select the single best matching function from the available functions below. "
-        "Return only one JSON object with exactly the keys \"name\" and \"parameters\". "
-        "The name must exactly match a listed function. Include every listed parameter "
-        "for that function, use the specified JSON types, and do not add other keys. "
-        "A number parameter must be a JSON number, not a quoted string. "
-        "A string parameter must be quoted. Do not repeat the function name or parameters "
-        "after the JSON object. Use the user's values faithfully; do not invent values.\n"
-        f"Available functions:\n{json.dumps(function_schemas, ensure_ascii=False)}\n"
-        "For regex replacements, match the target in the current request: replacing "
-        "the word 'cat' with 'dog' uses regex 'cat' and replacement 'dog'; replacing "
-        "all vowels with asterisks uses regex '[aeiouAEIOU]' and replacement '*'. "
-        "Do not reuse an example value when it does not match the request.\n"
+        "Select the single best matching function "
+        "from the available functions below. "
+        "Return only one JSON object with exactly the "
+        "keys \"name\" and \"parameters\". "
+        "The name must exactly match a listed function. "
+        "Include every listed parameter "
+        "for that function, use the specified JSON "
+        "types, and do not add other keys. "
+        "A number parameter must be a JSON "
+        "number, not a quoted string. "
+        "A string parameter must be quoted. Do "
+        "not repeat the function name or parameters "
+        "after the JSON object. Use the user's values "
+        "faithfully; do not invent values.\n"
+        f"Available functions:\n{json.dumps(
+            function_schemas, ensure_ascii=False)}\n"
+        "For regex replacements, match the target "
+        "in the current request: replacing "
+        "the word 'cat' with 'dog' uses regex "
+        "'cat' and replacement 'dog'; replacing "
+        "all vowels with asterisks uses regex "
+        "'[aeiouAEIOU]' and replacement '*'. "
+        "Do not reuse an example value when it "
+        "does not match the request.\n"
         f"User request: {prompt}\n"
         "Function call JSON:"
     )
@@ -77,7 +94,8 @@ def generate_function_call(
     input_ids: List[int] = model.encode(system_prompt)[0].tolist()
     generated_text = ""
     past_key_values: Any = None
-    cached_logits = getattr(model, "get_logits_from_input_ids_with_cache", None)
+    cached_logits = getattr(
+        model, "get_logits_from_input_ids_with_cache", None)
 
     max_tokens = 200  # Safety limit to prevent infinite loops
 
@@ -90,7 +108,8 @@ def generate_function_call(
         # --- Core Constrained Decoding Step ---
         masked_logits = decoder.apply_mask(logits, generated_text)
         if not np.isfinite(masked_logits).any():
-            raise RuntimeError(f"No valid next token while generating a call for prompt: {prompt}")
+            raise RuntimeError("No valid next token while generating "
+                               f"a call for prompt: {prompt}")
 
         # Select highest probability valid token
         next_token_id = int(np.argmax(masked_logits))
@@ -115,7 +134,8 @@ def generate_function_call(
             )
 
     raise RuntimeError(
-        f"Failed to generate a complete JSON function call for prompt {prompt!r} "
+        "Failed to generate a complete JSON "
+        f"function call for prompt {prompt!r} "
         f"within {max_tokens} tokens. Partial output: {generated_text!r}"
     )
 

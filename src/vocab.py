@@ -16,7 +16,7 @@ class Vocabulary:
         """Load vocabulary from the JSON file."""
         with open(vocab_path, 'r', encoding='utf-8') as f:
             vocab_data: Dict[str, int] = json.load(f)
-            
+
         for token, token_id in vocab_data.items():
             # Handle standard byte-fallback or special tokens if necessary.
             # Qwen models often use byte-level BPE; ensure unicode decoding.
@@ -26,8 +26,8 @@ class Vocabulary:
 
     def _decode_token_string(self, token: str) -> str:
         """
-        Clean up token representations. 
-        Note: The actual implementation depends on Qwen's specific vocab format 
+        Clean up token representations.
+        Note: The actual implementation depends on Qwen's specific vocab format
         (e.g., handling 'Ġ' for spaces in some BPE tokenizers).
         """
         return token.replace('Ġ', ' ').replace('Ċ', '\n')
