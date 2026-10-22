@@ -75,13 +75,15 @@ No repeatable accuracy or elapsed-time benchmark is currently included in the re
 
 ## Testing strategy
 
-The repository includes sample prompts and function schemas under `data/input/`, but no automated test suite or recorded benchmark is currently included. For a manual check:
+Run the automated edge-case suite with:
 
-1. Install dependencies and run the default command shown above.
-2. Confirm that the output file is created and can be parsed as JSON.
-3. For every result, check that the prompt is preserved, the function name exists in the definitions, all required parameters are present, and each value has the declared JSON type.
-4. Compare each selected function and extracted value with the expected answer to assess semantic accuracy; record total runtime separately.
-5. Repeat with changed input files, including strings with punctuation or escapes, different numeric values, ambiguous requests, and functions with different parameter sets.
+```sh
+make test
+```
+
+The tests use Python's standard-library `unittest` framework and mock model inference, so they do not download or load the language model. They cover JSON prefix parsing, call-envelope and parameter-schema validation, missing/malformed input files, invalid input records, output paths without a parent directory, and output-write failures.
+
+The sample prompts and function schemas are under `data/input/`. For an end-to-end check with the actual model, run the application as described above, then verify the output JSON, compare selected functions and arguments with expected answers, and record elapsed time. The automated suite does not measure model accuracy or inference speed.
 
 ## Example
 

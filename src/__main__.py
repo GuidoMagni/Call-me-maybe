@@ -1,9 +1,11 @@
 """Main entry point for the function calling application."""
 import argparse
 import json
+import os
 import sys
 import numpy as np
 from typing import Any, Dict, List
+from pydantic import ValidationError
 
 # Adjust imports according to your local SDK location
 try:
@@ -39,7 +41,7 @@ def load_json_file(filepath: str) -> List[Dict[str, Any]]:
             if not isinstance(data, list):
                 raise ValueError("JSON root must be an array.")
             return data
-    except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+    except (OSError, json.JSONDecodeError, ValueError) as e:
         print(f"Error loading {filepath}: {e}", file=sys.stderr)
         sys.exit(1)
 
@@ -149,8 +151,18 @@ def main() -> None:
     prompts_raw = load_json_file(args.input)
 
     # 2. Validate Data with Pydantic
-    functions = [FunctionDefinition(**f) for f in funcs_raw]
-    prompts = [PromptInput(**p) for p in prompts_raw]
+    try:
+        functions = [
+            FunctionDefinition.model_validate(function)
+            for function in funcs_raw
+        ]
+        prompts = [
+            PromptInput.model_validate(prompt)
+            for prompt in prompts_raw
+        ]
+    except ValidationError as e:
+        print(f"Error validating input data: {e}", file=sys.stderr)
+        sys.exit(1)
 
     # 3. Initialize Model and SDK
     model = Small_LLM_Model()
@@ -172,10 +184,14 @@ def main() -> None:
         results.append(output.model_dump())
 
     # 5. Output results
-    import os
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    with open(args.output, 'w', encoding='utf-8') as f:
-        json.dump(results, f, indent=4)
+    output_directory = os.path.dirname(args.output) or "."
+    try:
+        os.makedirs(output_directory, exist_ok=True)
+        with open(args.output, 'w', encoding='utf-8') as f:
+            json.dump(results, f, indent=4)
+    except OSError as e:
+        print(f"Error writing output file {args.output}: {e}", file=sys.stderr)
+        sys.exit(1)
 
     print(f"Success! Output written to {args.output}")
 

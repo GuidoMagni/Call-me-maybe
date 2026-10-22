@@ -1,4 +1,4 @@
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install run debug clean lint lint-strict test
 
 install:
 	uv sync
@@ -13,6 +13,7 @@ clean:
 	rm -rf __pycache__
 	rm -rf src/__pycache__
 	rm -rf llm_sdk/__pycache__
+	rm -rf tests/__pycache__
 	rm -rf .mypy_cache
 	rm -rf .pytest_cache
 
@@ -23,3 +24,6 @@ lint:
 lint-strict:
 	flake8 .
 	mypy . --strict
+
+test:
+	uv run python -m unittest discover -s tests -v
