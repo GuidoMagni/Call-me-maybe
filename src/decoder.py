@@ -170,6 +170,7 @@ def _is_valid_json_prefix(text: str) -> bool:
 
 
 def _matches_json_type(value: object, json_type: str) -> bool:
+    """Return whether value matches the specified JSON type."""
     if json_type == "string":
         return isinstance(value, str)
     if json_type == "number":

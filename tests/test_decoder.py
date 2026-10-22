@@ -119,7 +119,7 @@ class CallSchemaTests(unittest.TestCase):
         )
 
     def test_rejects_wrong_envelope_and_function(self) -> None:
-        for call in (
+        calls: tuple[object, ...] = (
             [],
             {"name": "unknown", "parameters": {"count": 1, "label": "x"}},
             {
@@ -128,7 +128,8 @@ class CallSchemaTests(unittest.TestCase):
                 "extra": True,
             },
             {"name": "fn_example", "parameters": []},
-        ):
+        )
+        for call in calls:
             with self.subTest(call=call):
                 self.assertIsNone(self.decoder.normalize_call(call))
 
