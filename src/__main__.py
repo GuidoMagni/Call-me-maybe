@@ -79,8 +79,8 @@ def generate_function_call(
         "not repeat the function name or parameters "
         "after the JSON object. Use the user's values "
         "faithfully; do not invent values.\n"
-        f"Available functions:\n{json.dumps(
-            function_schemas, ensure_ascii=False)}\n"
+        "Available functions:\n"
+        f"{json.dumps(function_schemas, ensure_ascii=False)}\n"
         "For regex replacements, match the target "
         "in the current request: replacing "
         "the word 'cat' with 'dog' uses regex "

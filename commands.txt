@@ -1,0 +1,6 @@
+export UV_CACHE_DIR=/home/gumagni/sgoinfre/$USER/.cache/uv
+export HF_HOME=/home/gumagni/sgoinfre/$USER/huggingface
+uv venv /home/gumagni/sgoinfre/$USER/.venv
+source /home/gumagni/sgoinfre/gumagni/.venv/bin/activate
+uv sync --active
+uv run --active src
