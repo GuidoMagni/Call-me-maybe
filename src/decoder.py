@@ -291,7 +291,10 @@ class JSONConstrainedDecoder:
                 return None
             if isinstance(value, float) and not math.isfinite(value):
                 return None
-            normalized_parameters[name] = value
+            if definition.type == "number":
+                normalized_parameters[name] = float(value)
+            else:
+                normalized_parameters[name] = value
         return {"name": function.name, "parameters": normalized_parameters}
 
     def is_valid_call(self, call_data: object) -> bool:
