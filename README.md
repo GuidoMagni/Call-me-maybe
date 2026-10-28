@@ -37,7 +37,7 @@ uv run python -m src \
   -output data/output/function_calling_results.json
 ```
 
-The output is a JSON array. Each entry contains exactly `prompt`, `name`, and `parameters`; parameter names and JSON types are checked against the selected function definition. Missing files, invalid JSON, and invalid generated calls are reported as errors.
+The output is a JSON array. Each entry contains exactly `prompt`, `name`, and `parameters`; parameter names and JSON types are checked against the selected function definition. Values for parameters declared as `number` are written as floating-point numbers (for example, `40.0`); parameters declared as `integer` remain integers. Missing files, invalid JSON, and invalid generated calls are reported as errors.
 
 ## Resources
 
@@ -95,8 +95,8 @@ Given the prompt `What is the sum of 40 and 2?` and an `fn_add_numbers` definiti
     "prompt": "What is the sum of 40 and 2?",
     "name": "fn_add_numbers",
     "parameters": {
-      "a": 40,
-      "b": 2
+      "a": 40.0,
+      "b": 2.0
     }
   }
 ]

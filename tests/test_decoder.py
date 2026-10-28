@@ -62,9 +62,16 @@ class CallSchemaTests(unittest.TestCase):
             }),
             {
                 "name": "fn_example",
-                "parameters": {"count": 3, "label": "ok"},
+                "parameters": {"count": 3.0, "label": "ok"},
             },
         )
+        result = self.decoder.normalize_call({
+            "name": "fn_example",
+            "parameters": {"count": 3, "label": "ok"},
+        })
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result["parameters"]["count"], float)
+        self.assertIn('"count": 3.0', json.dumps(result))
 
     def test_accepts_empty_string_with_all_required_parameters(self) -> None:
         self.assertEqual(
@@ -74,20 +81,23 @@ class CallSchemaTests(unittest.TestCase):
             }),
             {
                 "name": "fn_example",
-                "parameters": {"count": 0, "label": ""},
+                "parameters": {"count": 0.0, "label": ""},
             },
         )
 
-    def test_accepts_large_numbers_exactly(self) -> None:
+    def test_normalizes_large_numbers_to_float(self) -> None:
         large_integer = 10 ** 60
         large_call = {
             "name": "fn_example",
             "parameters": {"count": large_integer, "label": "large"},
         }
+        normalized = self.decoder.normalize_call(large_call)
+        self.assertIsNotNone(normalized)
         self.assertEqual(
-            self.decoder.normalize_call(large_call),
-            large_call,
+            normalized["parameters"]["count"],
+            float(large_integer),
         )
+        self.assertIsInstance(normalized["parameters"]["count"], float)
 
     def test_accepts_special_characters_in_string_parameter(self) -> None:
         label = 'quote: " slash: \\\\ newline:\n unicode: café'

@@ -262,8 +262,7 @@ class JSONConstrainedDecoder:
                     token_str[0], []).append((token_id, token_str))
 
     def normalize_call(self, call_data: object) -> dict[str, Any] | None:
-        """Validate a call and normalize JSON-encoded
-        numeric strings to numbers."""
+        """Validate a call and normalize numeric parameter values."""
         if not isinstance(call_data, dict) or set(
                 call_data) != {"name", "parameters"}:
             return None
@@ -289,12 +288,14 @@ class JSONConstrainedDecoder:
                     return None
             if not _matches_json_type(value, definition.type):
                 return None
+            if definition.type == "number":
+                try:
+                    value = float(value)
+                except OverflowError:
+                    return None
             if isinstance(value, float) and not math.isfinite(value):
                 return None
-            if definition.type == "number":
-                normalized_parameters[name] = float(value)
-            else:
-                normalized_parameters[name] = value
+            normalized_parameters[name] = value
         return {"name": function.name, "parameters": normalized_parameters}
 
     def is_valid_call(self, call_data: object) -> bool:
