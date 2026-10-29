@@ -62,6 +62,24 @@ class LoadJsonFileTests(unittest.TestCase):
         self.assertIn("JSON root must be an array", stderr.getvalue())
 
 
+class TemplateParameterTests(unittest.TestCase):
+    def test_preserves_quoted_template_verbatim(self) -> None:
+        call_data = {
+            "name": "fn_format_template",
+            "parameters": {"template": "Say hello to {name}"},
+        }
+
+        app._preserve_template_from_prompt(
+            call_data,
+            'Format template: Say "hello" to {name}',
+        )
+
+        self.assertEqual(
+            call_data["parameters"]["template"],
+            'Say "hello" to {name}',
+        )
+
+
 class MainTests(unittest.TestCase):
     def write_inputs(
         self,

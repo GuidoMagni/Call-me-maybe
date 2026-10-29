@@ -129,6 +129,7 @@ def generate_function_call(
         if not generated_text[end:].strip() and isinstance(call_data, dict):
             normalized_call = decoder.normalize_call(call_data)
             if normalized_call is not None:
+                _preserve_template_from_prompt(normalized_call, prompt)
                 return normalized_call
             raise RuntimeError(
                 f"Generated function call does not match a registered schema "
@@ -140,6 +141,21 @@ def generate_function_call(
         f"function call for prompt {prompt!r} "
         f"within {max_tokens} tokens. Partial output: {generated_text!r}"
     )
+
+
+def _preserve_template_from_prompt(
+    call_data: Dict[str, Any],
+    prompt: str,
+) -> None:
+    """Copy format-template text verbatim instead of relying on model recall."""
+    prefix = "Format template: "
+    if (
+        call_data.get("name") == "fn_format_template"
+        and prompt.startswith(prefix)
+    ):
+        parameters = call_data.get("parameters")
+        if isinstance(parameters, dict):
+            parameters["template"] = prompt[len(prefix):]
 
 
 def main() -> None:
