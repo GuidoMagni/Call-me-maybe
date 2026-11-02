@@ -158,7 +158,7 @@ def _preserve_template_from_prompt(
             parameters["template"] = prompt[len(prefix):]
 
 
-def main() -> None:
+def _run() -> None:
     """Main application loop."""
     args = parse_arguments()
 
@@ -210,6 +210,15 @@ def main() -> None:
         sys.exit(1)
 
     print(f"Success! Output written to {args.output}")
+
+
+def main() -> None:
+    """Run the application and handle user-requested interruption."""
+    try:
+        _run()
+    except KeyboardInterrupt:
+        print("\nInterrupted by user.", file=sys.stderr)
+        sys.exit(130)
 
 
 if __name__ == "__main__":

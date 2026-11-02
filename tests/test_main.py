@@ -114,6 +114,90 @@ class MainTests(unittest.TestCase):
         self.assertIn("Error validating input data", stderr.getvalue())
         model_factory.assert_not_called()
 
+    def test_input_file_errors_exit_cleanly_before_model_initialization(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            functions_path, prompts_path = self.write_inputs(directory)
+            cases = (
+                ("-functions_definition", "missing"),
+                ("-functions_definition", "invalid"),
+                ("-input", "missing"),
+                ("-input", "invalid"),
+            )
+
+            for argument, failure in cases:
+                with self.subTest(argument=argument, failure=failure):
+                    bad_path = Path(directory) / f"{failure}-{argument[1:]}.json"
+                    if failure == "invalid":
+                        bad_path.write_text("{broken", encoding="utf-8")
+                    else:
+                        bad_path = Path(directory) / f"missing-{argument[1:]}.json"
+
+                    stderr = io.StringIO()
+                    with (
+                        patch.object(
+                            app.sys,
+                            "argv",
+                            [
+                                "src",
+                                "-functions_definition",
+                                functions_path,
+                                "-input",
+                                prompts_path,
+                                argument,
+                                str(bad_path),
+                            ],
+                        ),
+                        patch.object(app, "Small_LLM_Model") as model_factory,
+                        contextlib.redirect_stderr(stderr),
+                    ):
+                        with self.assertRaises(SystemExit) as raised:
+                            app.main()
+
+                    self.assertEqual(raised.exception.code, 1)
+                    self.assertIn(f"Error loading {bad_path}", stderr.getvalue())
+                    self.assertNotIn("Traceback", stderr.getvalue())
+                    model_factory.assert_not_called()
+
+    def test_keyboard_interrupt_exits_cleanly(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            functions_path, prompts_path = self.write_inputs(directory)
+            stderr = io.StringIO()
+            with (
+                patch.object(
+                    app.sys,
+                    "argv",
+                    [
+                        "src",
+                        "-functions_definition",
+                        functions_path,
+                        "-input",
+                        prompts_path,
+                    ],
+                ),
+                patch.object(
+                    app,
+                    "Small_LLM_Model",
+                    return_value=SimpleNamespace(
+                        get_path_to_vocab_file=lambda: "unused.json"
+                    ),
+                ),
+                patch.object(app, "Vocabulary"),
+                patch.object(
+                    app,
+                    "generate_function_call",
+                    side_effect=KeyboardInterrupt,
+                ),
+                contextlib.redirect_stderr(stderr),
+            ):
+                with self.assertRaises(SystemExit) as raised:
+                    app.main()
+
+        self.assertEqual(raised.exception.code, 130)
+        self.assertIn("Interrupted by user.", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_writes_output_to_filename_without_parent_directory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             functions_path, prompts_path = self.write_inputs(directory)
