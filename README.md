@@ -17,6 +17,12 @@ The project focuses on constrained decoding: instead of trusting the model to pr
 - Internet access on the first run to download the model and tokenizer from Hugging Face
 - Enough memory and compute for Qwen3-0.6B; inference uses a supported GPU when available and otherwise falls back to CPU
 
+In case of limited memory:
+```sh
+export UV_CACHE_DIR=/home/gumagni/sgoinfre/$USER/.cache/uv
+export HF_HOME=/home/gumagni/sgoinfre/$USER/huggingface
+```
+
 ### Install and run
 
 From the repository root:
@@ -24,6 +30,14 @@ From the repository root:
 ```sh
 uv sync
 uv run python -m src
+```
+
+In case of limited memory:
+```sh
+uv venv /home/gumagni/sgoinfre/$USER/.venv
+source /home/gumagni/sgoinfre/gumagni/.venv/bin/activate
+uv sync --active
+uv run --active src
 ```
 
 The default inputs are `data/input/functions_definition.json` and `data/input/function_calling_tests.json`. The default output is `data/output/function_calling_results.json`; the program creates `data/output/` when needed. Generated output is not part of the submission and should not be committed.
@@ -49,7 +63,7 @@ The output is a JSON array. Each entry contains exactly `prompt`, `name`, and `p
 
 ### AI use
 
-AI assistance was used to draft the finite-state-machine concepts in the constrained decoder and the Pydantic validation boilerplate. AI assistance was also used to revise this README. Generated material must be understood and verified by the project author.
+AI assistance was used to explain the finite-state-machine concepts in the constrained decoder and the Pydantic validation boilerplate. AI assistance was also used to revise this README.
 
 ## Algorithm and design decisions
 
@@ -75,7 +89,7 @@ No repeatable accuracy or elapsed-time benchmark is currently included in the re
 
 ## Testing strategy
 
-Run the automated edge-case suite with:
+I ran the automated edge-case suite with:
 
 ```sh
 make test
