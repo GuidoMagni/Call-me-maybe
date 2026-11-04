@@ -81,12 +81,6 @@ def generate_function_call(
         "faithfully; do not invent values.\n"
         "Available functions:\n"
         f"{json.dumps(function_schemas, ensure_ascii=False)}\n"
-        "For regex replacements, match the target "
-        "in the current request: replacing "
-        "the word 'cat' with 'dog' uses regex "
-        "'cat' and replacement 'dog'; replacing "
-        "all vowels with asterisks uses regex "
-        "'[aeiouAEIOU]' and replacement '*'. "
         "Do not reuse an example value when it "
         "does not match the request.\n"
         f"User request: {prompt}\n"
@@ -147,7 +141,8 @@ def _preserve_template_from_prompt(
     call_data: Dict[str, Any],
     prompt: str,
 ) -> None:
-    """Copy format-template text verbatim instead of relying on model recall."""
+    """Copy format-template text verbatim instead
+    of relying on model recall."""
     prefix = "Format template: "
     if (
         call_data.get("name") == "fn_format_template"
